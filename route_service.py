@@ -232,7 +232,7 @@ class MBTAStop(Stop):
         return self.name
 
 
-class MBTARouteTypes(Enum):
+class RouteTypes(Enum):
     """
 0 - Tram, Streetcar, Light rail. Any light rail or street level system within a metropolitan area.
 1 - Subway, Metro. Any underground rail system within a metropolitan area.
@@ -267,7 +267,7 @@ class MBTARouteService(RouteService):
     route_path = "/routes"
     stop_path = "/stops"
 
-    def __init__(self, api_key: Optional[str] = None, route_types: List[MBTARouteTypes] = None):
+    def __init__(self, api_key: Optional[str] = None, route_types: List[RouteTypes] = None):
         self._session = requests.Session()
         _adapter = HTTPAdapter(max_retries=Retry(
             total=5,
@@ -473,7 +473,7 @@ def main():
     argument_parser.add_argument('-i', '--interactive', default=False, action="store_true", help='interactive solution for question three')
 
     route_group = argument_parser.add_argument_group("route types")
-    for route_type in MBTARouteTypes:
+    for route_type in RouteTypes:
         flag = route_type.name.lower().replace("_", "-")
         description = route_type.name.lower().replace("_", " ")
         route_group.add_argument(f"--{flag}", dest="route_types", action="append_const", const=route_type, help=f"include {description} routes")
@@ -498,7 +498,7 @@ def main():
     if parsed_arguments.route_types:
         route_types = parsed_arguments.route_types
     else:
-        route_types = [MBTARouteTypes.LIGHT_RAIL, MBTARouteTypes.SUBWAY]
+        route_types = [RouteTypes.LIGHT_RAIL, RouteTypes.SUBWAY]
     api_key = None
     if parsed_arguments.api_key is not None:
         api_key = parsed_arguments.api_key
