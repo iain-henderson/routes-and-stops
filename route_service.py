@@ -355,18 +355,21 @@ class MBTARouteService(RouteService):
 # TUI Client Implementation
 ###
 def list_stops(route_service: RouteService, *_unused_args):
-    if route_service.stops:
-        stop_label_size = max(len(str(stop)) for stop in route_service.stops) + 4
-        stops_per_line = 120 // stop_label_size
-        print("Stops:")
-        for index, stop in enumerate(route_service.stops):
-            output = f'{str(stop): >{stop_label_size}}'
-            if index % stops_per_line < stops_per_line - 1:
-                print(output, end="")
-            else:
-                print(output)
-    else:
-        print(f"No known stops")
+    try:
+        if route_service.stops:
+            stop_label_size = max(len(str(stop)) for stop in route_service.stops) + 4
+            stops_per_line = 120 // stop_label_size
+            print("Stops:")
+            for index, stop in enumerate(route_service.stops):
+                output = f'{str(stop): >{stop_label_size}}'
+                if index % stops_per_line < stops_per_line - 1:
+                    print(output, end="")
+                else:
+                    print(output)
+        else:
+            print(f"No known stops")
+    except RouteServiceException as e:
+        print(e)
     print()
 
 
@@ -384,12 +387,15 @@ def one(route_service: RouteService, *_unused_args):
     Hint: It might be tempting to hardcode things in your algorithm that are specific to the MBTA system, but we believe it will make things easier for you to generalize your solution so that it could work for different and/or larger subway systems.
     How you handle input, represent train routes, and present output is your choice.
     """
-    if route_service.routes:
-        print("Routes:")
-        for route in route_service.routes:
-            print(f"  {route}")
-    else:
-        print("No known routes!")
+    try:
+        if route_service.routes:
+            print("Routes:")
+            for route in route_service.routes:
+                print(f"  {route}")
+        else:
+            print("No known routes!")
+    except RouteServiceException as e:
+        print(e)
 
 
 def two(route_service: RouteService, *_unused_args):
@@ -404,14 +410,17 @@ def two(route_service: RouteService, *_unused_args):
     Hint: It might be tempting to hardcode things in your algorithm that are specific to the MBTA system, but we believe it will make things easier for you to generalize your solution so that it could work for different and/or larger subway systems.
     How you handle input, represent train routes, and present output is your choice.
     """
-    one(route_service)
-    if route_service.routes:
-        sorted_routes = sorted(route_service.routes, key=lambda r: len(r.stops))
-        print(f"Route with the Fewest Stops: {sorted_routes[0]} ({len(sorted_routes[0].stops)})")
-        print(f"Route with the Most Stops: {sorted_routes[-1]} ({len(sorted_routes[-1].stops)})")
-        print("Stops with Multiple Routes:")
-        for stop in (s for s in route_service.stops if len(s.routes) >= 2):
-            print(f"  {stop}: {', '.join(str(r) for r in stop.routes)}")
+    try:
+        one(route_service)
+        if route_service.routes:
+            sorted_routes = sorted(route_service.routes, key=lambda r: len(r.stops))
+            print(f"Route with the Fewest Stops: {sorted_routes[0]} ({len(sorted_routes[0].stops)})")
+            print(f"Route with the Most Stops: {sorted_routes[-1]} ({len(sorted_routes[-1].stops)})")
+            print("Stops with Multiple Routes:")
+            for stop in (s for s in route_service.stops if len(s.routes) >= 2):
+                print(f"  {stop}: {', '.join(str(r) for r in stop.routes)}")
+    except RouteServiceException as e:
+        print(e)
 
 
 def three(route_service: RouteService, start: Optional[str] = None, destination: Optional[str] = None, interactive: bool = False, *_unused_args):
@@ -428,36 +437,39 @@ def three(route_service: RouteService, start: Optional[str] = None, destination:
     How you handle input, represent train routes, and present output is your choice.
     """
 
-    # Turn strings into stops
-    if start is not None and destination is not None:
-        start = start.strip()
-        destination = destination.strip()
-        starting_stop = route_service.stop(start)
-        destination_stop = route_service.stop(destination)
-        if starting_stop is None:
-            print(f'Unable to find the stop "{start}"')
-        elif destination_stop is None:
-            print(f'Unable to find the stop "{destination}"')
-        else:
-            trip = route_service.trip(starting_stop, destination_stop)
-            print(f"{start} to {destination} -> {', '.join(str(t) for t in trip)}")
-    while start != "" and interactive:  # This explicit check allows the first iteration
-        start = input("Enter the starting stop: ").strip()  # trim white space from input
-        if start == "list":
-            list_stops(route_service)
-        elif start != "":
+    try:
+        # Turn strings into stops
+        if start is not None and destination is not None:
+            start = start.strip()
+            destination = destination.strip()
             starting_stop = route_service.stop(start)
+            destination_stop = route_service.stop(destination)
             if starting_stop is None:
                 print(f'Unable to find the stop "{start}"')
+            elif destination_stop is None:
+                print(f'Unable to find the stop "{destination}"')
             else:
-                destination = input("Enter the destination stop: ").strip()  # trim white space from input
-                if destination != "":
-                    destination_stop = route_service.stop(destination)
-                    if destination_stop is None:
-                        print(f'Unable to find the stop "{destination}"')
-                    else:
-                        trip = route_service.trip(starting_stop, destination_stop)
-                        print(f"{start} to {destination} -> {', '.join(str(t) for t in trip)}")
+                trip = route_service.trip(starting_stop, destination_stop)
+                print(f"{start} to {destination} -> {', '.join(str(t) for t in trip)}")
+        while start != "" and interactive:  # This explicit check allows the first iteration
+            start = input("Enter the starting stop: ").strip()  # trim white space from input
+            if start == "list":
+                list_stops(route_service)
+            elif start != "":
+                starting_stop = route_service.stop(start)
+                if starting_stop is None:
+                    print(f'Unable to find the stop "{start}"')
+                else:
+                    destination = input("Enter the destination stop: ").strip()  # trim white space from input
+                    if destination != "":
+                        destination_stop = route_service.stop(destination)
+                        if destination_stop is None:
+                            print(f'Unable to find the stop "{destination}"')
+                        else:
+                            trip = route_service.trip(starting_stop, destination_stop)
+                            print(f"{start} to {destination} -> {', '.join(str(t) for t in trip)}")
+    except RouteServiceException as e:
+        print(e)
 
 
 def main():
